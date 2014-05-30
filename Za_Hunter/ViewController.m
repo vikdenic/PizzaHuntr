@@ -10,9 +10,10 @@
 #import <MapKit/MapKit.h>
 #import "PizzaPlace.h"
 
-@interface ViewController () <CLLocationManagerDelegate>
+@interface ViewController () <CLLocationManagerDelegate, UITableViewDelegate, UITableViewDataSource>
 
 @property NSMutableArray *pizzaPlacesArray;
+@property (weak, nonatomic) IBOutlet UITableView *pizzaTableView;
 
 @end
 
@@ -24,14 +25,17 @@
     self.myLocationManager = [[CLLocationManager alloc]init];
     self.myLocationManager.delegate = self;
 
-    self.pizzaPlacesArray = [[NSMutableArray alloc]initWithCapacity:4];
+    self.pizzaPlacesArray = [[NSMutableArray alloc]initWithCapacity:5];
+
+    [self.myLocationManager startUpdatingLocation];
+
 }
 
 #pragma mark - Actions
 
-- (IBAction)locatePizzaButton:(id)sender {
-    [self.myLocationManager startUpdatingLocation];
-}
+//- (IBAction)locatePizzaButton:(id)sender {
+//    [self.myLocationManager startUpdatingLocation];
+//}
 
 #pragma mark - Helpers
 
@@ -48,7 +52,7 @@
         NSArray *mapItems = response.mapItems;
 
         // Retrieves data for 5 closest Pizza Places
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < 5; i++)
         {
             MKMapItem *mapItemWithData = [mapItems objectAtIndex:i];
 
@@ -81,16 +85,32 @@
         NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"coordinatesDifference" ascending:YES];
         NSArray *sortedArray = [self.pizzaPlacesArray sortedArrayUsingDescriptors:@[sortDescriptor]];
 
-        for(PizzaPlace *pizzaPlace in self.pizzaPlacesArray)
-        {
-            NSLog(@"%@ is %f away",pizzaPlace.mapItem.name, pizzaPlace.milesDifference);
-        }
-
+//        for(PizzaPlace *pizzaPlace in self.pizzaPlacesArray)
+//        {
+//            NSLog(@"%@ is %f away",pizzaPlace.mapItem.name, pizzaPlace.milesDifference);
+//        }
+        [self.pizzaTableView reloadData];
     }];
 }
 
-
 #pragma mark - Delegates
+
+// TableView
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.pizzaPlacesArray.count;
+
+}
+
+-(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    PizzaPlace *pizzaRef = [self.pizzaPlacesArray objectAtIndex:indexPath.row];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"PizzaCellID"];
+    cell.textLabel.text = pizzaRef.mapItem.name;
+    cell.detailTextLabel.text = [NSString stringWithFormat:@"%.1fm away",pizzaRef.milesDifference];
+
+    return cell;
+}
 
 //CLLocationManager
 -(void)reverseGeoCode:(CLLocation *)location
